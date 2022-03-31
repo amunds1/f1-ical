@@ -10,7 +10,9 @@ use icalendar::Event;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
+#[allow(non_snake_case)]
 struct CircuitType {
+    #[allow(non_camel_case_types)]
     circuitId: String,
     url: String,
     circuitName: String,
@@ -26,6 +28,7 @@ struct LocationType {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(non_snake_case)]
 struct RaceType {
     season: String,
     round: String,
@@ -37,6 +40,7 @@ struct RaceType {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(non_snake_case)]
 struct RaceListType {
     Races: Vec<RaceType>,
 }
@@ -53,6 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let races: RaceListType = serde_json::from_value(data["MRData"]["RaceTable"].clone()).unwrap();
 
     // Create a empty calendar
+    #[allow(non_snake_case)]
     let mut raceCalendar = Calendar::new();
 
     // Iterate over races
