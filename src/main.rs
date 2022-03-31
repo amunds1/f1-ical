@@ -81,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Write calendar to a .ics file
 	let data = raceCalendar.to_string();
-	let mut f = File::create("icalendar.ics").expect("Unable to create file");
+	let mut f = File::create("f1-races.ics").expect("Unable to create file");
 	f.write_all(data.as_bytes()).expect("Unable to write data");
 
 	Ok(())
