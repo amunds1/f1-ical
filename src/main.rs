@@ -1,5 +1,5 @@
 use chrono::offset::Utc;
-use chrono::{DateTime, Duration, FixedOffset};
+use chrono::{Datelike, DateTime, Duration, FixedOffset};
 
 use chrono::NaiveDateTime;
 use icalendar::Calendar;
@@ -44,7 +44,7 @@ struct RaceListType {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// Fetch race data
-	let data = reqwest::get("http://ergast.com/api/f1/2022.json")
+	let data = reqwest::get(format!("http://ergast.com/api/f1/{}.json", Utc::now().year()))
 		.await?
 		.json::<serde_json::Value>()
 		.await?;
