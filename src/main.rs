@@ -46,7 +46,7 @@ struct RaceListType {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn fetchAndSaveRaces() -> Result<(), Box<dyn std::error::Error>> {
     // Fetch race data
     let data = reqwest::get(format!("http://ergast.com/api/f1/{}.json", Utc::now().year()))
         .await?
@@ -88,6 +88,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data = raceCalendar.to_string();
     let mut f = File::create("f1-races.ics").expect("Unable to create file");
     f.write_all(data.as_bytes()).expect("Unable to write data");
+
+    Ok(())
+}
+
+#[macro_use] extern crate rocket;
+
+#[get("/")]
+fn index() -> &'static str {
+    "Hello, world!"
+}
+
+#[get("/races")]
+fn races() -> &'static str {
+    "Check your download folder"
+}
+
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    let _rocket = rocket::build()
+        .mount("/", routes![index, races])
+        .launch()
+        .await?;
 
     Ok(())
 }
