@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -8,6 +9,9 @@ use icalendar::Calendar;
 use icalendar::Component;
 use icalendar::Event;
 use serde::Deserialize;
+use rocket_dyn_templates::{Template, context};
+
+#[macro_use] extern crate rocket;
 
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
@@ -92,11 +96,14 @@ async fn fetchAndSaveRaces() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[macro_use] extern crate rocket;
+#[get("/template")]
+fn template() -> Template {
+    Template::render("races", context! { name: "Andreas" })
+}
 
 #[get("/")]
 fn index() -> &'static str {
-    "Hello, world!"
+    "Hello, welcome to the api!"
 }
 
 #[get("/races")]
@@ -107,9 +114,10 @@ fn races() -> &'static str {
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     let _rocket = rocket::build()
-        .mount("/", routes![index, races])
-        .launch()
-        .await?;
+        .attach(Template::fairing())
+        .mount("/", routes![index, template, races])
+        .ignite().await?
+        .launch().await?;
 
     Ok(())
 }
