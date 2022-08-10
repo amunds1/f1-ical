@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::{Path, PathBuf};
 
 use chrono::{Datelike, DateTime, Duration, FixedOffset};
 use chrono::NaiveDateTime;
@@ -8,6 +9,8 @@ use chrono::offset::Utc;
 use icalendar::Calendar;
 use icalendar::Component;
 use icalendar::Event;
+use rocket::fs::NamedFile;
+use rocket::response::status::NotFound;
 use serde::Deserialize;
 use rocket_dyn_templates::{Template, context};
 
@@ -90,32 +93,37 @@ async fn fetchAndSaveRaces() -> Result<(), Box<dyn std::error::Error>> {
 
     // Write calendar to a .ics file
     let data = raceCalendar.to_string();
-    let mut f = File::create("f1-races.ics").expect("Unable to create file");
+
+    // Generate filename on the form f1-races-{day}.{month}.{year}
+    let fileNameWithTimestamp = format!("f1-races-{day}.{month}.{year}.ics",
+                           day=Utc::now().day(),
+                           month=Utc::now().month(),
+                           year=Utc::now().year());
+
+
+    let mut f = File::create(format!("./static/f1-races.ics")).expect("Unable to create file");
     f.write_all(data.as_bytes()).expect("Unable to write data");
 
     Ok(())
 }
 
-#[get("/template")]
-fn template() -> Template {
+#[get("/")]
+fn index() -> Template {
     Template::render("races", context! { name: "Andreas" })
 }
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, welcome to the api!"
-}
-
-#[get("/races")]
-fn races() -> &'static str {
-    "Check your download folder"
+// Download file if it exists in /static
+#[get("/<file..>")]
+async fn files(file: PathBuf) -> Result<NamedFile, NotFound<String>> {
+    let path = Path::new("static/").join(file);
+    NamedFile::open(&path).await.map_err(|e| NotFound(e.to_string()))
 }
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     let _rocket = rocket::build()
         .attach(Template::fairing())
-        .mount("/", routes![index, template, races])
+        .mount("/", routes![index, files])
         .ignite().await?
         .launch().await?;
 
