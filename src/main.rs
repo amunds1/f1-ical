@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -8,6 +9,9 @@ use icalendar::Calendar;
 use icalendar::Component;
 use icalendar::Event;
 use serde::Deserialize;
+use rocket_dyn_templates::{Template, context};
+
+#[macro_use] extern crate rocket;
 
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
@@ -46,7 +50,7 @@ struct RaceListType {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn fetchAndSaveRaces() -> Result<(), Box<dyn std::error::Error>> {
     // Fetch race data
     let data = reqwest::get(format!("http://ergast.com/api/f1/{}.json", Utc::now().year()))
         .await?
@@ -88,6 +92,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data = raceCalendar.to_string();
     let mut f = File::create("f1-races.ics").expect("Unable to create file");
     f.write_all(data.as_bytes()).expect("Unable to write data");
+
+    Ok(())
+}
+
+#[get("/template")]
+fn template() -> Template {
+    Template::render("races", context! { name: "Andreas" })
+}
+
+#[get("/")]
+fn index() -> &'static str {
+    "Hello, welcome to the api!"
+}
+
+#[get("/races")]
+fn races() -> &'static str {
+    "Check your download folder"
+}
+
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    let _rocket = rocket::build()
+        .attach(Template::fairing())
+        .mount("/", routes![index, template, races])
+        .ignite().await?
+        .launch().await?;
 
     Ok(())
 }
